@@ -1,8 +1,16 @@
-"""
-    Data mining and decision making
-    projet 2: BlackJack
-    inspiration: https://www.askpython.com/python/examples/blackjack-game-using-python
-"""
+#***************************************************************************************#
+#               LSINF2275 - Data mining & Decision Making                               #
+#                       Project 2: BlackJack                                            #
+#                                                                                       #
+#   Authors :   BAILLY Gabriel                                                          #
+#               WAUTIER Lara                                                            #
+#               ZONE Corentin                                                           #
+#   Program :   DATS2M                                                                  #
+#                                                                                       #
+#   inspiration: https://www.askpython.com/python/examples/blackjack-game-using-python  #
+#                                                                                       #
+#***************************************************************************************#
+
 # import
 import random
 import os
