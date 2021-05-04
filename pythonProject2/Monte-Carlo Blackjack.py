@@ -18,9 +18,9 @@ import gym
 from gym import wrappers
 import random
 import numpy as np
+
 from collections import defaultdict
-from matplotlib import pyplot
-import matplotlib.pyplot as plt
+import collections
 
 
 #------------------------------------------------------------------------------
@@ -68,23 +68,27 @@ def monteCarloQ(env, N):
         for j in range(len(res)):                   
             G = gamma * G + res[j][2]  # remplacer gamma*G par gamma*Q si possible
             
-            if res[j][0] not in Rewards:        # create if not yet in there    
-                Rewards[res[j][0]] = [G]
-                Q_k_a[res[j][0]] = G    
+            if (res[j][0],res[j][1]) not in Rewards:        # create if not yet in there
+                Rewards[(res[j][0],res[j][1])] = [G]
+                Q_k_a[(res[j][0],res[j][1])] = G
             else:                               # append if already in there + average
-                Rewards[res[j][0]].append(G)
-                Q_k_a[res[j][0]] = (1/(len(Rewards[res[j][0]]))) * \
-                                    sum(Rewards[res[j][0]])
+                Rewards[(res[j][0],res[j][1])].append(G)
+                Q_k_a[(res[j][0],res[j][1])] = (1/(len(Rewards[(res[j][0],res[j][1])])) * \
+                                    sum(Rewards[(res[j][0],res[j][1])]))
                                     
     return Q_k_a
     
     
 Qvalues = monteCarloQ(env, 50000)
 print(Qvalues)
+print(Qvalues.keys())
+print(Qvalues.get(((11, 2, False), 0)))
+print(Qvalues.get(((11, 2, False), 1)))
+print(Qvalues.get(((16, 7, False), 0)))
+print(Qvalues.get(((16, 7, False), 1)))
+sorteddico=collections.OrderedDict(sorted(Qvalues.items()))
+print(sorteddico)
 
-
-for i in range(10):
-    print(play_episode(env))
 
 
 
