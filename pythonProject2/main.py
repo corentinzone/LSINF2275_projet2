@@ -68,7 +68,7 @@ def game_decision(deck, player_cards, player_score):
     while player_score < 21:
         # case Split (two cards have the same value)
         if (player_cards[0].card_value == player_cards[1].card_value or
-            (player_cards[0].card_value == 1 and player_cards[1].card_value == 11)) and not split:
+            (player_cards[0].card_value == 1 and player_cards[1].card_value == 11)) and not split and len(player_cards)==2:
             choice = input("(H)it or (S)tand or (D)ouble or (Sp)lit : ")
             # Sanity checks for player's choice
             while len(choice) not in [1, 2] or (
@@ -76,12 +76,18 @@ def game_decision(deck, player_cards, player_score):
                     and choice.upper() != 'SP'):
                 print("Wrong choice!! Try Again")
                 choice = input("(H)it or (S)tand or (D)ouble or (Sp)lit : ")
-        else:
+        elif len(player_cards)==2:
             choice = input("(H)it or (S)tand or (D)ouble : ")
             # Sanity checks for player's choice
             while len(choice) != 1 or (choice.upper() != 'H' and choice.upper() != 'S' and choice.upper() != 'D'):
                 print("Wrong choice!! Try Again")
-                choice = input("(H)it or (S)tand or (D)ouble: ")
+                choice = input("(H)it or (S)tand or (D)ouble : ")
+        else:
+            choice = input("(H)it or (S)tand : ")
+            # Sanity checks for player's choice
+            while len(choice) != 1 or (choice.upper() != 'H' and choice.upper() != 'S'):
+                print("Wrong choice!! Try Again")
+                choice = input("(H)it or (S)tand : ")
 
         # if Split
         if choice.upper() == 'SP':
