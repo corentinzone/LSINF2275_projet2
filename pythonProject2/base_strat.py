@@ -359,7 +359,7 @@ def create_opti_policy(Q_value_sorted):
 def simulation():
     opti_policy={}
     out=[]
-    for i in range(50):
+    for i in range(5):
         myresult = monte_carlo(opti_policy)
         Q_value_sorted = collections.OrderedDict(sorted(myresult[2].items()))
         capital = myresult[0]

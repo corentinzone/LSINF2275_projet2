@@ -18,25 +18,52 @@ import gym
 from gym import wrappers
 import random
 import numpy as np
-
 from collections import defaultdict
 import collections
-
+import itertools
+import pandas as pd 
 
 #------------------------------------------------------------------------------
 
-env = gym.make('Blackjack-v0')
+# --- Set up --- #
+"""
+Set:
+    - blackjack environnement for simulations, 
+    - random Q function and Policy 
+    - empty list for rewards
+    - discount factor gamma    
+"""
 
-def play_episode(env):
+env = gym.make('Blackjack-v0')
+envSpace = env.action_space.n
+Q = {}
+Policy = {}
+Rewards = {}
+gamma = 0.95
+
+# to define all possible states
+playerSum = [i for i in range(4,22)]
+dealerCard = [i for i in range(1,11)]
+actions = [0,1]
+acePlayer = [True, False]
+
+# we set all initial Q-values and policy to zero has we can do it arbitrarily
+for p in playerSum:
+    for d in dealerCard:
+        for ace in acePlayer:
+            for a in actions:
+                Q[( (p,d,ace) , a )] = 0
+                Policy[ (p,d,ace) ] = 1  
+
+# game simulation when following current/updated policy 
+def play(env, policy):
     """
-    Plays a single episode with a set policy in the environment given. Records the state, action 
-    and reward for each step and returns the all timesteps for the episode.
+    Game simulation when following current/updated policy
     """
     episode = []
     state = env.reset()
     while True:
-        probs = [0.8, 0.2] if state[0] > 18 else [0.2, 0.8]
-        action = np.random.choice(np.arange(2), p=probs)
+        action = Policy[state]
         next_state, reward, done, info = env.step(action)
         episode.append((state, action, reward))
         state = next_state
@@ -44,51 +71,117 @@ def play_episode(env):
             break
     return episode
 
+# IMPORTANT : makes iteration over dictionnaries pairs easier for arg max !
+def pairwise(dico):
+    "s -> (s0, s1), (s2, s3), (s4, s5), ..."
+    a = iter(dico)
+    return zip(a, a)
+
+def argMax(Q, Policy):
+    for j in pairwise(Q.keys()):
+        state = j[0][0]
+        maxQ = max(Q[(state,0)], Q[(state,1)])
+        if maxQ == Q[(state,0)]:
+            Policy[state] = 0
+        else:
+            Policy[state] = 1
+    return Policy
+
+#------------------------------------------------------------------------------
 
 # --- Main Monte-Carlo Algorithm --- #
 
-def monteCarloQ(env, N):
+def monteCarloQ(env, N, Q, Policy, Rewards):
     """
     Computes the Q-values and the optimal policy for a Blackjack game.
     """
-    ## Set up
-    envSpace = env.action_space.n
-    Q_k_a = defaultdict(lambda: np.zeros(envSpace))
-    Policy = np.zeros(280)
-    Rewards = {}
-    gamma = 0.9
-    
-    # -- Main Loop -- #
     
     ## Run episodes
     for i in range(N):
-        res = play_episode(env) # simulate 1 episode
+        episode = play(env, Policy) # simulate 1 episode
         G = 0
+        
         ## Go through all steps of episode
-        for j in range(len(res)):                   
-            G = gamma * G + res[j][2]  # remplacer gamma*G par gamma*Q si possible
+        for step in reversed(episode):                   
+            G = gamma * G + step[2]  # remplacer gamma*G par gamma*Q si possible
+
+            ## update Q-values
+            if (step[0],step[1]) not in Rewards:        
+                Rewards[(step[0] , step[1])] = [G]
+                Q[(step[0] , step[1])] = G
+            else:                               
+                Rewards[(step[0],step[1])].append(G)
+                Q[(step[0],step[1])] = (1/(len(Rewards[(step[0], step[1])])) * \
+                                    sum(Rewards[(step[0],step[1])]))
             
-            if (res[j][0],res[j][1]) not in Rewards:        # create if not yet in there
-                Rewards[(res[j][0],res[j][1])] = [G]
-                Q_k_a[(res[j][0],res[j][1])] = G
-            else:                               # append if already in there + average
-                Rewards[(res[j][0],res[j][1])].append(G)
-                Q_k_a[(res[j][0],res[j][1])] = (1/(len(Rewards[(res[j][0],res[j][1])])) * \
-                                    sum(Rewards[(res[j][0],res[j][1])]))
-                                    
-    return Q_k_a
+            Policy = argMax(Q, Policy)
+            
+    return Q , Policy , Rewards
     
+# --- Simulations --- #
+Result = monteCarloQ(env, 1000000, Q, Policy, Rewards)
+print(Result[0])
+print(Result[1].keys())
+
+#------------------------------------------------------------------------------
+
+# --- Export Q-value functions (if ace) --- #
+
+Qlist = []
+for key, value in Result[0].items():
+    temp = [key,value]
+    Qlist.append(temp)
+
+## ace = True
+Qtrue = []
+for i in range(0,720,4):
+    Qtrue.append(Qlist[i])
+    Qtrue.append(Qlist[i+1])
     
-Qvalues = monteCarloQ(env, 50000)
-print(Qvalues)
-print(Qvalues.keys())
-print(Qvalues.get(((11, 2, False), 0)))
-print(Qvalues.get(((11, 2, False), 1)))
-print(Qvalues.get(((16, 7, False), 0)))
-print(Qvalues.get(((16, 7, False), 1)))
-sorteddico=collections.OrderedDict(sorted(Qvalues.items()))
-print(sorteddico)
+qtrue = []
+for i in range(0,360,2):
+    maxTrue = max(Qtrue[i][1] , Qtrue[i+1][1])
+    if maxTrue == Qtrue[i][1]:
+        qtrue.append(Qtrue[i])
+    else: 
+        qtrue.append(Qtrue[i+1]) 
+print(qtrue)    
+
+dfQtrue = []
+for i in range(18):
+    dfQtrue.append([])
+    for j in range(10):
+        dfQtrue[i].append(qtrue[10*i+j][1])
+
+dfQT = pd.DataFrame(data=dfQtrue)
+dfQT.to_csv('Q-values true.csv') 
+
+## ace = False
+Qfalse = []
+for i in range(2,721,4):
+    Qfalse.append(Qlist[i])
+    Qfalse.append(Qlist[i+1])
 
 
 
 
+# --- Export policy --- # 
+
+optPolicy = []
+for key, value in Result[1].items():
+    temp = [key,value]
+    optPolicy.append(temp)
+
+## ace = True
+poltrue = []
+for i in range(0,360,2):
+    poltrue.append(optPolicy[i])
+polT = pd.DataFrame(data=poltrue)
+polT.to_csv('policy true.csv') 
+    
+## ace = False
+polfalse = []
+for i in range(1,360,2):
+    polfalse.append(optPolicy[i])
+polF = pd.DataFrame(data=polfalse)
+polF.to_csv('policy false.csv') 
