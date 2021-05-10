@@ -56,7 +56,7 @@ for p in playerSum:
                 Policy[ (p,d,ace) ] = 1  
 
 # game simulation when following current/updated policy 
-def play(env, policy):
+def play(env, Policy):
     """
     Game simulation when following current/updated policy
     """
@@ -122,7 +122,7 @@ def monteCarloQ(env, N, Q, Policy, Rewards):
     return Q , Policy , Rewards
     
 # --- Simulations --- #
-Result = monteCarloQ(env, 1000000, Q, Policy, Rewards)
+Result = monteCarloQ(env, 100000, Q, Policy, Rewards)
 print(Result[0])
 print(Result[1].keys())
 
@@ -176,7 +176,7 @@ for i in range(2,360,2):
         qfalse.append(Qfalse[i+1]) 
 print(qfalse)    
 
-dfQfalse = []
+"""dfQfalse = []
 for i in range(18):
     dfQfalse.append([])
     for j in range(10):
@@ -184,7 +184,7 @@ for i in range(18):
 
 dfQF = pd.DataFrame(data=dfQfalse)
 dfQF.to_csv('Q-values false.csv') 
-
+"""
 
 # --- Export policy --- # 
 

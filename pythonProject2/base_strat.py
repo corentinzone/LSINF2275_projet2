@@ -371,9 +371,9 @@ def simulation():
     return out
 
 result = simulation()
-#print("PERCENTAGE WIN: "+str(result[0][2]))
+print("PERCENTAGE WIN: "+str(result[0][2]))
 print(result[0][0])
-#print("PERCENTAGE WIN: "+str(result[1][2]))
+print("PERCENTAGE WIN: "+str(result[1][2]))
 print(result[1][0])
-#print("PERCENTAGE WIN: "+str(result[-1][2]))
+print("PERCENTAGE WIN: "+str(result[-1][2]))
 print(result[-1][0])
