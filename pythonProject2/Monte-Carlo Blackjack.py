@@ -225,3 +225,42 @@ for i in range(1,360,2):
     polfalse.append(optPolicy[i])
 polF = pd.DataFrame(data=polfalse)
 polF.to_csv('policy false.csv') 
+
+
+#------------------------------------------------------------------------------
+"""
+Simulation zone:
+----------------
+simulations to see percentage of won games.
+"""
+
+def simGame(env, Policy):
+    """
+    Game simulation when following current/updated policy.
+    """
+    episode = []
+    state = env.reset()
+    while True:
+        
+        action = Policy[state]
+        
+        # use action to obtain next state until done
+        next_state, reward, done, info = env.step(action)
+        episode.append((state, action, reward))
+        state = next_state
+        if done:
+            break
+    return episode
+
+won = []
+percWin = []
+nGames = 0
+for i in range(1000):
+    episodeSim = simGame(env, Policy)
+    nGames += 1
+    if episodeSim[len(episodeSim)-1][2] == 1:
+        won.append(1)
+    percWin.append( (1/nGames) * sum(won) )
+
+pctW = pd.DataFrame(data=percWin)
+pctW.to_csv('win rate.csv')
