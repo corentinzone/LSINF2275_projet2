@@ -27,11 +27,14 @@ import pandas as pd
 
 # --- Set up --- #
 """
-Set:
+Set up zone ; defines:
+----------------------
     - blackjack environnement for simulations, 
     - random Q function and Policy 
     - empty list for rewards
-    - discount factor gamma    
+    - discount factor gamma  
+    
+Create subfunctions which will make implementation of the main loop easier.
 """
 
 env = gym.make('Blackjack-v0')
@@ -39,7 +42,7 @@ envSpace = env.action_space.n
 Q = {}
 Policy = {}
 Rewards = {}
-gamma = 0.8
+gamma = 0.65
 
 # to define all possible states
 playerSum = [i for i in range(4,22)]
@@ -58,12 +61,21 @@ for p in playerSum:
 # game simulation when following current/updated policy 
 def play(env, Policy):
     """
-    Game simulation when following current/updated policy
+    Game simulation when following current/updated policy.
     """
+    epsilon = 0.05
     episode = []
     state = env.reset()
     while True:
-        action = Policy[state]
+        
+        # either follow policy, either explore
+        explore = np.random.random()
+        if explore < 1 - epsilon:       # follow best policy
+            action = Policy[state]
+        else:                           # explore other action randomly
+            action = np.random.choice(actions)
+            
+        # use action to obtain next state until done
         next_state, reward, done, info = env.step(action)
         episode.append((state, action, reward))
         state = next_state
@@ -93,6 +105,11 @@ def argMax(Q, Policy):
 #------------------------------------------------------------------------------
 
 # --- Main Monte-Carlo Algorithm --- #
+"""
+Monte-Carlo Control :
+---------------------
+our main function for the projet. 
+"""
 
 def monteCarloQ(env, N, Q, Policy, Rewards):
     """
@@ -116,18 +133,20 @@ def monteCarloQ(env, N, Q, Policy, Rewards):
                 Rewards[(step[0],step[1])].append(G)
                 Q[(step[0],step[1])] = (1/(len(Rewards[(step[0], step[1])])) * \
                                     sum(Rewards[(step[0],step[1])]))
-            
-            Policy = argMax(Q, Policy) # once episode is done, update policy
-            
+        
+        Policy = argMax(Q, Policy) # once episode is done, update policy
+        
     return Q , Policy , Rewards
     
 # --- Simulations --- #
-Result = monteCarloQ(env, 100000, Q, Policy, Rewards)
+Result = monteCarloQ(env, 1000000, Q, Policy, Rewards)
 print(Result[0])
 print(Result[1].keys())
 
 #------------------------------------------------------------------------------
 """
+Visualisation zone :
+--------------------
 Here we export the results to dataframes (we use R for visualization).
 """
 # --- Export Q-value functions (if ace) --- #
@@ -168,23 +187,23 @@ for i in range(2,721,4):
     Qfalse.append(Qlist[i+1])
 
 qfalse = []
-for i in range(2,360,2):
-    maxFalse = max(Qtrue[i][1] , Qtrue[i+1][1])
+for i in range(0,360,2):
+    maxFalse = max(Qfalse[i][1] , Qfalse[i+1][1])
     if maxFalse == Qfalse[i][1]:
         qfalse.append(Qfalse[i])
     else: 
         qfalse.append(Qfalse[i+1]) 
 print(qfalse)    
 
-"""dfQfalse = []
+
+dfQfalse = []
 for i in range(18):
     dfQfalse.append([])
     for j in range(10):
-        dfQfalse[i].append(qfalse[10*i+j][1]) # TODO : solve bug :/
+        dfQfalse[i].append(qfalse[10*i+j][1])
 
 dfQF = pd.DataFrame(data=dfQfalse)
 dfQF.to_csv('Q-values false.csv') 
-"""
 
 # --- Export policy --- # 
 
