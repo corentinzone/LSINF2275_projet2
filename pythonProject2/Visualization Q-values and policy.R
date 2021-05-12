@@ -132,4 +132,10 @@ ggplot(dftemp) +
   xlab("Usable Ace") +
   ylab("Q-Values")
 
-
+# visualize win rate
+library(forecast)
+winrate = ts(read.csv("win rate.csv", header=T)[,2])
+autoplot(winrate, main = "Percentage of winnings (1000 simulations)") + theme_bw() +
+  xlab("Number of simulations") +
+  ylab("Win Rate") +
+  geom_hline(yintercept = mean(winrate[200:1000]), linetype = "dashed", color = "blue")
